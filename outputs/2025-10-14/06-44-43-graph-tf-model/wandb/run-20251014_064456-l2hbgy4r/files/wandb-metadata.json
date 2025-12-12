@@ -1,0 +1,107 @@
+{
+    "os": "Linux-6.6.87.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "python": "3.9.23",
+    "heartbeatAt": "2025-10-14T09:44:57.496838",
+    "startedAt": "2025-10-14T09:44:56.770042",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "dataset=famipacking"
+    ],
+    "state": "running",
+    "program": "/home/bakirkhon/Thesis/src/main.py",
+    "codePath": "src/main.py",
+    "git": {
+        "remote": "https://github.com/bakirkhon/Thesis.git",
+        "commit": "4f74c873258d3370a97c73cbadf8f5148dd86a34"
+    },
+    "email": "bakirkhon.khasankhujaev@mail.polimi.it",
+    "root": "/home/bakirkhon/Thesis",
+    "host": "LAPTOP-JU9PRQ7F",
+    "username": "bakirkhon",
+    "executable": "/home/bakirkhon/miniconda3/envs/digress/bin/python3",
+    "cpu_count": 6,
+    "cpu_count_logical": 12,
+    "cpu_freq": {
+        "current": 2592.0070000000005,
+        "min": 0.0,
+        "max": 0.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2592.007,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2592.007,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2592.007,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2592.007,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2592.007,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2592.007,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2592.007,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2592.007,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2592.007,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2592.007,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2592.007,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2592.007,
+            "min": 0.0,
+            "max": 0.0
+        }
+    ],
+    "disk": {
+        "total": 1006.853931427002,
+        "used": 17.501197814941406
+    },
+    "gpu": "NVIDIA GeForce GTX 1660 Ti",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce GTX 1660 Ti",
+            "memory_total": 6442450944
+        }
+    ],
+    "memory": {
+        "total": 7.708221435546875
+    }
+}

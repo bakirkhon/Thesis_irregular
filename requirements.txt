@@ -1,0 +1,16 @@
+hydra-core==1.3.2
+imageio==2.36.0
+matplotlib==3.9.2
+networkx==3.4.2
+numpy==1.26.4
+omegaconf==2.3.0
+overrides==7.3.1
+pandas==2.2.3
+pyemd==1.0.0
+PyGSP==0.6.1
+pytorch_lightning==2.4.0
+scipy==1.13.1
+# setuptools version from Colab (>=75) is fine – no need to pin
+torchmetrics==1.3.1
+tqdm==4.66.5
+wandb==0.17.8

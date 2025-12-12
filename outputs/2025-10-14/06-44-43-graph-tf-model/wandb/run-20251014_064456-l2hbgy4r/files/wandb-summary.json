@@ -1,0 +1,1 @@
+{"val_epoch/E_CE": 0.13058030605316162, "_timestamp": 1760435484.3423727, "train_loss/batch_CE": 0.10876975953578949, "train_loss/E_CE": 0.10876975953578949, "train_loss/y_CE": -1, "_runtime": 387.5633895397186, "_step": 301, "train_epoch/E_CE": 0.13058030605316162, "test_epoch/E_CE": 0.10330776125192642, "_wandb": {"runtime": 387}}
