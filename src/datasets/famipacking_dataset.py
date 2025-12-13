@@ -39,8 +39,8 @@ class FamipackingGraphDataset(InMemoryDataset):
         g_cpu=torch.Generator()
         g_cpu.manual_seed(0) # sets a deterministic random generator for reproducible splitting
 
-        test_len=int(round(self.num_graphs*0.2))
-        train_len=int(round((self.num_graphs-test_len)*0.8))
+        test_len=int(round(self.num_graphs*0.05))
+        train_len=int(round(self.num_graphs*0.8))
         val_len=self.num_graphs-train_len-test_len
         indices=torch.randperm(self.num_graphs, generator=g_cpu)
         print(f'Dataset sizes: train {train_len}, val {val_len}, test {test_len}')
@@ -82,7 +82,6 @@ class FamipackingGraphDataset(InMemoryDataset):
             n=X.shape[0]
             #na=graph['na']
             y=torch.zeros([1, 0]).float() # empty placeholder label for each graph# na*torch.ones(1,dtype=torch.int) #
-            #y=y.unsqueeze(-1)
             # first row=source nodes, second row=destination 
             edge_index, _=torch_geometric.utils.dense_to_sparse((E.sum(-1)>0).float())
             # print(edge_index)

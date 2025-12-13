@@ -19,8 +19,8 @@ from tkinter import messagebox
 from arguments import get_args
 import pybullet as p
 
-_args = get_args()    # <- parse ALL CLI arguments
-inference_flag = _args.inference   # <- This is available globally in binPhy.py
+_args = get_args()    
+inference_flag = _args.inference   
 
 
 def ask_user_for_index():
@@ -45,7 +45,7 @@ def ask_user_for_index():
                 user_choice["value"] = v   # convert to 0-based index
                 root.destroy()
             else:
-                messagebox.showerror("Invalid", "Please enter a value between 1 and 76.")
+                messagebox.showerror("Invalid", "Please enter order ID")
         except:
             messagebox.showerror("Invalid", "Please enter a valid integer.")
 
@@ -153,14 +153,14 @@ class PackingGame(gym.Env):
     def __init__(self,
                  args
     ):
-        #args = vars(args)
-        self.args = args          # keep the full Namespace reference
-        args = vars(args)         # you can still use it as a dict
+        
+        self.args = args          
+        args = vars(args)         
         self.resolutionAct = args['resolutionA']
         self.resolutionH   = args['resolutionH']
         self.bin_dimension = args['bin_dimension']
         self.dataset = args['dataset']
-        # Define heterogeneous bins (two medium, one small)
+        # two medium, one small bins 
         self.bin_sequence = [
             np.round([0.34, 0.34, 0.18], decimals=6),
             np.round([0.34, 0.34, 0.18], decimals=6),
@@ -192,8 +192,7 @@ class PackingGame(gym.Env):
         self.non_blocking  = args['non_blocking']
         self.time_limit    = args['time_limit']
         self.inference     = args['inference'] 
-        self.next_bin_size=self.bin_sequence[0]
-
+        
         self.interface = None
         self.item_vec = np.zeros((1000, 9))
         self.rangeX_A, self.rangeY_A = np.ceil(self.bin_dimension[0:2] / self.resolutionAct).astype(np.int32)
@@ -212,6 +211,7 @@ class PackingGame(gym.Env):
                     assert self.dataSample == 'pose'
                     self.item_creator = RandomItemCreator(np.arange(0, len(self.shapeDict.keys())))
         else:
+            # Load model predictions
             pred = torch.load("/home/bakirkhon/Thesis_irregular/inference_irregular_predictions.pt")
             E=pred[user_choice]['E']            
             bin_item_lists, self.plan_summary = extract_packing_plan(E)
@@ -220,12 +220,7 @@ class PackingGame(gym.Env):
                 bin_item_lists[2] = bin_item_lists[1] + bin_item_lists[2]
                 bin_item_lists[1] = [None]
             print("after:",bin_item_lists)    
-            # Keep the original prediction for failure tracking
-            
-
-            # Filter out empty ones for normal packing sequence
-            #bin_item_lists = [arr for arr in bin_item_lists if None not in arr]
-
+           
             # Initialize tracking of failures
             self.failed_items_per_bin = {i: [] for i in range(len(bin_item_lists))}
             self.failed_items_all = []
@@ -244,8 +239,7 @@ class PackingGame(gym.Env):
             self.bin_item_lists_original = copy.deepcopy(bin_item_lists)      
             print("cleaned",bin_item_lists)      
             self.item_creator = FixedListCreator(data_name=self.dataname, infoDict=self.infoDict,lists_by_bin=bin_item_lists)        
-            
-            # print(bin_item_lists)
+
         self.total_bins = len(self.bin_sequence)
         self.next_item_vec = np.zeros((9))
 
@@ -261,7 +255,6 @@ class PackingGame(gym.Env):
         self.transformation = np.array(self.transformation)
 
         self.rotNum = self.ZRotNum
-        # print("test:",self.rotNum)
         self.act_len = self.selectedAction
 
         if self.chooseItem:
@@ -341,8 +334,8 @@ class PackingGame(gym.Env):
 
         print(f"\n📦 Bin {self.current_bin_index + 1}/{self.total_bins}")
         print(f"   Size: {self.bin_dimension}")
-        print(f"   Bin volume: {bin_volume:.2f}")
-        print(f"   Packed volume: {packed_volume:.2f}")
+        print(f"   Bin volume: {bin_volume:.3f}")
+        print(f"   Packed volume: {packed_volume:.3f}")
         print(f"   Utilization: {utilization:.2f}%\n")
 
         return bin_volume, packed_volume, utilization
@@ -394,9 +387,7 @@ class PackingGame(gym.Env):
         if self.current_bin_index < self.total_bins and self.total_items < self.item_limit:
             try:    
                 next_bin_size = self.bin_sequence[self.current_bin_index]
-                # print(f"\n🆕 Moving to next bin ({self.current_bin_index + 1}/{self.total_bins})")
                 self.next_bin_size=next_bin_size
-                print("self.interface.reset(new_bin=next_bin_size)",next_bin_size)
                 self.interface.reset(new_bin=next_bin_size)
                 self.space = Space(next_bin_size, self.resolutionAct, self.resolutionH, False, self.ZRotNum,
                                 self.shotInfo, self.scale)
@@ -410,11 +401,7 @@ class PackingGame(gym.Env):
                 self.id = None
                 time.sleep(2)
                 self.interface.cameraForRecord()
-                #print(self.item_creator.item_list)
-                # if not self.repack_active:# reset the item queue so old previews aren’t reused
-                #     if hasattr(self.item_creator, "item_list"):
-                #         self.item_creator.item_list.clear()
-                #     self.next_item_vec[:] = 0
+
 
                 return self.cur_observation()
             except:
@@ -424,11 +411,8 @@ class PackingGame(gym.Env):
         print("\n✅ All bins filled for this episode.")
 
         if self.inference:
-            print("🟦 Opening index selection window for next trajectory...")
             new_index = ask_user_for_index()
 
-            # Update global user_choice if needed
-            #global user_choice
             user_choice = new_index
             self.failed_items_all.clear()
             # Reload the predicted packing plan
@@ -470,29 +454,28 @@ class PackingGame(gym.Env):
                     f"Sph: {geom['sphericity']:.2f} | "
                     f"Proj(top/front/side): {geom['projected_areas']['top']:.6f}, {geom['projected_areas']['front']:.6f}, {geom['projected_areas']['side']:.6f}"
                 )
-        # for item in Va: 
-        #     print(item)
+
 
         self.repack_active = False
 
         if self.total_items == self.item_limit and self.inference is None:
             self.build_edge_set()
             print("No items left, saving...")
-            save_dir = "./dataset"
+            save_dir = "."
             os.makedirs(save_dir, exist_ok=True)
             save_path = os.path.join(save_dir, "training_dataset_irregular.pt")
             save_path2 = os.path.join(save_dir, "inference_dataset_irregular.pt")
             torch.save(self.graph_dataset, save_path)
             torch.save(self.inference_dataset, save_path2)
         self.total_items = 0   
-        # np.save(f"./logs/bin_results.npy", self.bin_results)
         return None
+
     def reset(self, index=None):
         """
         Reset environment at the start of a new episode.
         Keeps PyBullet connected and clears per-episode state.
         """
-        # --- Reset bin and episode tracking ---
+        # Reset bin and episode tracking
         self.episodeCounter +=  1
         self.current_bin_index = 0
         if self.inference:
@@ -508,8 +491,7 @@ class PackingGame(gym.Env):
         # Also clear global geometry accumulator
         global Va
         Va.clear()
-
-        # --- Pick first bin (usually medium) ---
+        
         current_bin_size = self.bin_sequence[self.current_bin_index]
         self.bin_dimension = current_bin_size
         print(f"🚀 Starting new episode | Bin {self.current_bin_index + 1}/{self.total_bins} | Size: {current_bin_size}")
@@ -521,9 +503,9 @@ class PackingGame(gym.Env):
                 for edge_type, items in item_dict.items():
                     print(f"  Bin {edge_type}: {items}")
 
-        # --- Manage PyBullet interface safely ---
+
         if self.interface is None:
-            # First episode — create new interface
+            # First episode - create new interface
             self.interface = Interface(
                 bin=self.bin_dimension,
                 foldername=self.objPath,
@@ -536,7 +518,7 @@ class PackingGame(gym.Env):
             # Keep connection alive, just clear world
             self.interface.reset(new_bin=self.bin_dimension)
 
-        # --- Rebuild spatial map for new bin ---
+        # Rebuild spatial map for new bin
         self.space = Space(
             self.bin_dimension,
             self.resolutionAct,
@@ -547,7 +529,7 @@ class PackingGame(gym.Env):
             self.scale
         )
 
-        # --- Reset item generation and state tracking ---
+        # Reset item generation and state tracking
         if self.inference is None: 
             self.item_creator.reset(index)
             if hasattr(self.item_creator, "item_list"):
@@ -568,68 +550,7 @@ class PackingGame(gym.Env):
 
         return self.cur_observation()
 
-
-
-    # def reset(self, index=None):
-    #     # Start from first bin of the sequence
-    #     if not hasattr(self, "current_bin_index"):
-    #         self.current_bin_index = 0
-
-    #     current_bin_size = self.bin_sequence[self.current_bin_index]
-    #     print(f"🚀 Starting bin {self.current_bin_index + 1}/{self.total_bins} | Size: {current_bin_size}")
-
-    #     self.space = Space(current_bin_size, self.resolutionAct, self.resolutionH, False, self.ZRotNum,
-    #                     self.shotInfo, self.scale)
-
-    #     self.interface = Interface(
-    #         bin=current_bin_size,
-    #         foldername=self.objPath,
-    #         visual=self.visual,
-    #         scale=self.scale,
-    #         simulationScale=self.meshScale,
-    #         maxBatch=self.maxBatch
-    #     )
-
-    #     self.bin_dimension = current_bin_size
-    #     self.item_idx = 0
-    #     self.packed = []
-    #     self.packedId = []
-    #     self.item_creator.reset(index)
-    #     self.space.reset()
-    #     # After setting self.bin_dimension and creating self.space:
-    #     self.rangeX_A, self.rangeY_A = np.ceil(self.bin_dimension[0:2] / self.resolutionAct).astype(np.int32)
-
-
-    #     return self.cur_observation()
-
-
-    # def reset(self, index = None):
-    #     # If we just finished a bin and have more bins to fill, continue
-    #     if hasattr(self, 'current_bin_index') and self.current_bin_index < self.max_bins_per_episode:
-    #         print(f"🔁 Starting bin {self.current_bin_index + 1}/{self.max_bins_per_episode}")
-    #     else:
-    #         self.current_bin_index = 0
-    #         self.bin_results = []
-    #         self.space.reset()
-
-    #     self.episodeCounter = (self.episodeCounter + 1) % self.updatePeriod
-    #     if self.episodeCounter == 0 or self.interface is None:
-    #         if self.interface is not None:
-    #             self.interface.close()
-    #             del self.interface
-    #         self.interface = Interface(bin=self.bin_dimension, foldername=self.objPath, visual=self.visual,
-    #                                    scale=self.scale, simulationScale=self.meshScale, maxBatch=self.maxBatch,)
-    #     else:
-    #         self.interface.reset()
-    #     self.item_creator.reset(index)
-    #     self.packed = []
-    #     self.packedId = []
-    #     self.next_item_vec[:] = 0
-    #     self.item_idx = 0
-    #     self.item_vec[:] = 0
-    #     self.id = None
-    #     return self.cur_observation()
-
+    
     def get_ratio(self):
         totalVolume = 0
         for idx in range(self.item_idx):
@@ -639,8 +560,7 @@ class PackingGame(gym.Env):
     def get_item_ratio(self, next_item_ID):
         return self.infoDict[next_item_ID][0]['volume'] / np.prod(self.bin_dimension)
 
-    def gen_next_item_ID(self):
-        # print(self.item_creator.preview(1)[0])
+    def gen_next_item_ID(self):        
         return self.item_creator.preview(1)[0]
 
     def get_action_candidates(self, orderAction):
@@ -677,8 +597,7 @@ class PackingGame(gym.Env):
                 return self.next_bin()
     
             self.next_item_vec[0] = self.next_item_ID
-           
-            # print("next_item_id:",self.next_item_ID)
+                       
             naiveMask = self.space.get_possible_position(self.next_item_ID, self.shapeDict[self.next_item_ID], self.selectedAction)
 
 
@@ -706,16 +625,8 @@ class PackingGame(gym.Env):
                         self.candidates = np.concatenate((self.candidates, np.zeros((dif, 5))), axis=0)
 
                 if self.candidates is None:
-                    # poszFlatten = self.space.posZValid.reshape(-1)
-                    # ROT,X,Y = np.unravel_index(selectedIndex, (self.rotNum, self.rangeX_A, self.rangeY_A))
-                    # selectedIndex = np.argsort(poszFlatten)[0: self.selectedAction]
-                    # H = poszFlatten[selectedIndex]
-                    # V = self.space.naiveMask.reshape(-1)[selectedIndex]
-                    # H[:] = self.bin_dimension[-1]
-                    # self.candidates = np.concatenate([ROT.reshape(-1, 1), X.reshape(-1, 1),
-                    #                                  Y.reshape(-1, 1), H.reshape(-1, 1), V.reshape(-1, 1)], axis=1)
                     posz = self.space.posZValid
-                    rotNum, rangeX_A, rangeY_A = posz.shape  # ← always correct, even after bin change
+                    rotNum, rangeX_A, rangeY_A = posz.shape  
 
                     poszFlatten = posz.reshape(-1)
                     selectedIndex = np.argsort(poszFlatten)[0: self.selectedAction]
@@ -724,7 +635,6 @@ class PackingGame(gym.Env):
                     H = poszFlatten[selectedIndex]
                     V = self.space.naiveMask.reshape(-1)[selectedIndex]
 
-                    # If you want to push them to bin top when no candidates were found:
                     H[:] = self.bin_dimension[-1]
 
                     self.candidates = np.concatenate(
@@ -740,15 +650,10 @@ class PackingGame(gym.Env):
             fixed_hm = self._resize_heightmap(self.space.heightmapC)
             result = np.concatenate((result, fixed_hm.reshape(-1)))
 
-            #result = np.concatenate((np.array(self.next_k_item_ID), self.space.heightmapC.reshape(-1)))
-
         return result
 
     def action_to_position(self, action):
         rotIdx, lx, ly = self.candidates[action][0:3].astype(np.int)
-        # if self.total_items==0:
-        #     rotIdx=0
-        # print("Selected rotation index:", rotIdx)
         return rotIdx, np.round((lx * self.resolutionAct, ly * self.resolutionAct, self.bin_dimension[2]), decimals=6), (lx,ly)
 
     def prejudge(self, rotIdx, translation, naiveMask):
@@ -762,7 +667,6 @@ class PackingGame(gym.Env):
 
     # Note the transform between Ra coord and Rh coord
     def step(self, action):
-        # print(self.item_creator.item_list)
         if self.non_blocking and not self.finished[0]:
             return self.nullObs, 0.0, False, {'Valid': False}
 
@@ -847,14 +751,13 @@ class PackingGame(gym.Env):
                     'Valid': True,
                     }
             observation = self.cur_observation()
-             # Instead of ending the episode completely:
-            
+            # Instead of ending the episode completely:            
             new_obs = self.next_bin()
             if new_obs is None:
                 return observation, reward, True, info  # episode end
             else:
                 return new_obs, reward, False, info
-            #return observation, reward, True, info
+
 
         if sim_suc:          
             if self.globalView:
@@ -868,18 +771,16 @@ class PackingGame(gym.Env):
             
             reward = item_ratio * 10
             self.item_idx += 1
-            #self.total_items += 1
             if success: 
                 self.item_creator.update_item_queue(self.orderAction)
             self.item_creator.generate_item()  # add a new box to the list                 
             observation = self.cur_observation()
-            # print(self.total_items)
+
             if observation is None:
                 # Convert to a terminal zero-vector obs
                 observation = np.zeros(self.obs_len, dtype=np.float32)
                 return observation, 0.0, True, {'Valid': True}
-            # ✅ Stop after total_items
-            # print("observation",observation)
+
             bin_volume = np.prod(self.bin_dimension)
             packed_volume = sum(
                 self.interface.meshDict[obj].volume / 1_000_000
@@ -890,8 +791,6 @@ class PackingGame(gym.Env):
             if self.total_items >= self.item_limit:
                 print(f"\n Reached item limit ({self.item_limit})")
                 for item in self.packed:
-                    # _, _, utilization = self.print_bin_utilization() 
-                        # Compute utilization (no printing here)
                     bin_volume = np.prod(self.bin_dimension)
                     packed_volume = sum(
                         self.interface.meshDict[obj].volume / 1_000_000
@@ -911,9 +810,9 @@ class PackingGame(gym.Env):
                         new_obs = self.next_bin()
                         if new_obs is None:
                             return observation, reward, True, {'Valid': True}  # episode end
-                            # ✅ Properly rebuild the item creator’s queue
 
-                        # ✅ Reset environment counters
+
+                        # Reset environment counters
                         self.item_idx = 0
                         self.packed = []
                         self.packedId = []
@@ -925,9 +824,6 @@ class PackingGame(gym.Env):
                         return observation, reward, True, {'Valid': True}    
             return observation, reward, False, {'Valid': True}
         else:
-            # ❌ The physics simulation failed (object unstable or out of bounds)
-            print(f"[WARN] sim_suc=False for item ID {self.next_item_ID} (object {self.dicPath[self.next_item_ID]})")
-
             # Invalid call
             self.packed.pop()
             self.packedId.pop()
@@ -962,40 +858,38 @@ class PackingGame(gym.Env):
             E: np.ndarray of shape (n, n, num_edge_types)
             where the last dimension encodes bin categories (small, medium, large).
         """
-        # === 1. Define bin size categories ===
+        # 1. Define bin size categories
         bin_size_map = {'small': [], 'medium': [], 'large': []}
 
         # classify each bin in the sequence
         for i, dims in enumerate(self.bin_sequence):
             s = sum(dims)
-            if s < 0.8:  # adjust threshold for your unit scale (meters)
+            if s < 0.8:  # adjust threshold (meters)
                 bin_size_map['small'].append(i)
             elif 0.8 <= s <= 1.5:
                 bin_size_map['medium'].append(i)
             else:
                 bin_size_map['large'].append(i)
 
-        # === 2. Build node sets ===
+        # 2. Build node sets
         all_items = []
         for items in self.items_per_bin.values():
             all_items.extend(items)
 
         num_items = len(all_items)
 
-        # === 4. Map bin dims to index in Vb space ===
+        # 4. Map bin dims to index in Vb space
         unique_bin_dims = {tuple(map(float, b)) for b in self.bin_sequence}
         Vb = np.array(sorted(list(unique_bin_dims), reverse=True))
 
         # create zero array and concatenate
         Vb_extended = np.hstack((Vb, np.zeros((Vb.shape[0], 7))))
-        # for bin in Vb_extended:
-        #     print(bin)    
         n = num_items + Vb.shape[0]
         E = np.zeros((n, n, 3))
         E[:, :, 0] = 1  # initially "no edge"
         bin_size_to_vb_index = {tuple(dim): i for i, dim in enumerate(Vb)}
 
-        # === 5. Build edges per bin category ===
+        # 5. Build edges per bin category
         for bin_category, bin_indices in bin_size_map.items():
             for local_idx, bin_global_index in enumerate(bin_indices):
                 bin_dims = tuple(map(float, self.bin_sequence[bin_global_index]))
@@ -1015,11 +909,11 @@ class PackingGame(gym.Env):
                     E[bin_index, item_index, edge_channel] = 1
 
                 
-        # --- Construct final node matrix V ---
+        # Construct final node matrix V
         Va_arr = np.array(Va, dtype=np.float32)  # from global
         V = np.concatenate([Va_arr, Vb_extended.astype(np.float32)], axis=0)
 
-        # --- Build dictionary to save ---
+        # Build dictionary to save 
         graph_data = {
             "X": torch.from_numpy(V),
             "E": torch.from_numpy(E),
@@ -1049,7 +943,7 @@ class PackingGame(gym.Env):
         if hasattr(self, "debug_text_id") and self.debug_text_id is not None:
             p.removeUserDebugItem(self.debug_text_id)
 
-        # Draw fresh text
+        # Draw text
         self.debug_text_id = p.addUserDebugText(
             text,
             pos,

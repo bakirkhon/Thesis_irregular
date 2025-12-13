@@ -78,14 +78,14 @@ class Interface:
         """
         Clears all items and optionally rebuilds the bin walls for a new bin size.
         """
-        # ✅ Remove all objects and dynamic bodies
+        # Remove all objects and dynamic bodies
         for id in set(self.objs + self.objsDynamic):
             p.removeBody(id)
         self.objs = []
         self.objsDynamic = []
         self.meshDict = {}
 
-        # ✅ Remove old bin walls
+        # Remove old bin walls
         if hasattr(self, "boxIds"):
             for bid in self.boxIds:
                 try:
@@ -94,17 +94,17 @@ class Interface:
                     pass
             self.boxIds = []
 
-        # ✅ Update bin size if specified
+        # Update bin size if specified
         if new_bin is not None:
             self.bin = np.array(new_bin)
             self.bin = np.round(self.bin * self.defaultScale, decimals=6)
             self.containerFolder = self.foldername + '/../box_{}_{}_{}'.format(*self.bin)
             os.makedirs(self.containerFolder, exist_ok=True)
 
-        # ✅ Recreate new bin walls
+        # Recreate new bin walls
         self.addBox(self.bin, [1, 1, 1], [0, 0, 0])
 
-        # ✅ Reset camera to new view
+        # Reset camera to new view
         self.cameraForRecord()
 
     def getAllPositionAndOrientation(self, inner=True):
@@ -151,7 +151,7 @@ class Interface:
     def addBox(self, bin, scale, shift):
         box = self.makeBox(bin, color=[0.6, 0.3, 0.1, 1])
         counter = 0
-        self.boxIds = []   # ✅ Track all bin wall IDs
+        self.boxIds = []   # Track all bin wall IDs
 
         for index, side in enumerate(box):
             if index == 0:
@@ -196,7 +196,7 @@ class Interface:
 
                 p.changeDynamics(boxID, -1, contactProcessingThreshold=0)
                 counter += 1
-                self.boxIds.append(boxID)  # ✅ store this wall id
+                self.boxIds.append(boxID)  # store this wall id
 
         self.boxNum = counter
 
@@ -346,14 +346,13 @@ class Interface:
 
         recordList = []
 
-        # while not end:
         for _ in range(maxBatch):
             if end:
                 break
 
             batchCounter += 1
 
-            # simulation a batch
+
             for i in range(int(batch / dt)):
                 p.stepSimulation()
                 recordForThisTime = []
@@ -376,14 +375,13 @@ class Interface:
         angularTolSqr = angularTol * angularTol
         batchCounter = 0
 
-        # while not end:
         for _ in range(maxBatch):
             if end:
                 break
 
             batchCounter += 1
 
-            # simulation a batch
+
             for i in range(int(batch / dt)):
                 p.stepSimulation()
 

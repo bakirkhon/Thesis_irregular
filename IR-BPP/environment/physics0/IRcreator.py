@@ -89,7 +89,7 @@ class LoadItemCreator(ItemCreator):
         self.data_name = data_name
         self.traj_index = 0
         self.item_index = 0
-        self.infoDict = infoDict  # <-- store volume lookup table
+        self.infoDict = infoDict  # store volume lookup table
 
         print("Load dataset set: {}".format(data_name))
         self.item_trajs = torch.load(self.data_name)
@@ -130,7 +130,6 @@ class LoadItemCreator(ItemCreator):
             self.traj[15:19] = self.traj_2quarter
             self.traj[-4:] = self.traj_3quarter
 
-        # internal pointers
         self.item_index = 0
         self.item_set = self.traj.copy()
         self.item_set.append(None)
@@ -172,7 +171,7 @@ class FixedListCreator:
         """
         remaining = len(self.current_list) - self.index
         if remaining <= 0:
-            # No more items → environment will detect None and switch bins
+            # No more items -> environment will detect None and switch bins
             return [None] * length
 
         end = self.index + length
