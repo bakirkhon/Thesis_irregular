@@ -155,7 +155,7 @@ def main(cfg: DictConfig):
 
         print("Running inference mode (predict_edges)...")
         # Load inference dataset
-        inference_path = "/home/bakirkhon/Thesis_irregular/IR-BPP/inference_dataset_irregular.pt" #"/home/bakirkhon/Thesis/3D-bin-packing-master/dataset/inference_dataset_irregular.pt"
+        inference_path = "/home/bakirkhon/Thesis_irregular/IR-BPP/inference_dataset_irregular.pt" 
         assert os.path.exists(inference_path), f"File not found: {inference_path}"
         all_graphs = torch.load(inference_path)
         print(f"Loaded {len(all_graphs)} graphs from inference dataset.")
