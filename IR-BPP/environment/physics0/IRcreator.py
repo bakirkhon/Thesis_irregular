@@ -169,25 +169,66 @@ class FixedListCreator(ItemCreator):
         self.item_list.clear()
         self.index = 0
 
-        # Load next trajectory
         trajs = torch.load("/home/bakirkhon/Thesis/3D-bin-packing-master/dataset/inference_dataset_irregular.pt")
         sorted_traj = trajs[traj_index]["traj"]
-        # ----- SELECT ITEMS FOR THIS BIN -----
+
+        def score(item):
+            if item is None or item == -1:
+                return -1e12
+
+            dx, dy, dz = self.infoDict[item][0]['extents']
+            vol = self.infoDict[item][0]['volume']
+            footprint = dx * dy
+            if bin_idx != len(self.lists_by_bin) - 1:
+                return (1 * footprint + 0.5 * vol + 0 * max(dx,dy,dz))
+            else:
+                return (1 * footprint + 0.5 * vol + 5 * max(dx,dy,dz))
+
         if bin_idx < len(self.lists_by_bin):
             indices = self.lists_by_bin[bin_idx]
-            # extract items at these indices
-            self.current_list = []
-            for idx in indices:
-                if idx < len(sorted_traj):
-                    self.current_list.append(sorted_traj[idx])
-                else:
-                    self.current_list.append(None)
+
+            # collect items
+            self.current_list = [
+                sorted_traj[idx]
+                for idx in indices
+                if idx < len(sorted_traj)
+            ]
+
+            # sort
+            #if bin_idx == len(self.lists_by_bin) - 1:
+            self.current_list = sorted(self.current_list, key=score, reverse=True)
+
+            # append single terminator
+            self.current_list.append(None)
+
         else:
-            # No more bins -> produce only None
             self.current_list = [None]
 
-        # print(f"\n Bin {bin_idx+1}: fixed indices = {self.lists_by_bin[bin_idx]}")
-        # print("Retrieved items:", self.current_list)
+    # Without sorting
+    # def reset(self, bin_idx, traj_index):
+
+    #     self.item_list.clear()
+    #     self.index = 0
+
+    #     # Load next trajectory
+    #     trajs = torch.load("/home/bakirkhon/Thesis/3D-bin-packing-master/dataset/inference_dataset_irregular.pt")
+    #     sorted_traj = trajs[traj_index]["traj"]
+    #     # ----- SELECT ITEMS FOR THIS BIN -----
+    #     if bin_idx < len(self.lists_by_bin):
+    #         indices = self.lists_by_bin[bin_idx]
+    #         # extract items at these indices
+    #         self.current_list = []
+    #         for idx in indices:
+    #             if idx < len(sorted_traj):
+    #                 self.current_list.append(sorted_traj[idx])
+    #             else:
+    #                 self.current_list.append(None)
+    #     else:
+    #         # No more bins -> produce only None
+    #         self.current_list = [None]
+
+    #     # print(f"\n Bin {bin_idx+1}: fixed indices = {self.lists_by_bin[bin_idx]}")
+    #     # print("Retrieved items:", self.current_list)
 
     def preview(self, length):
         """
